@@ -75,14 +75,11 @@ Microservice ini dibangun menggunakan FastAPI dan memungkinkan pengguna untuk me
 
 2. Buka terminal cmd sesuai dengan folder repositori
 
-3. Ketik python -m venv [nama virtual environment] untuk membuka virtual environment
+3. Ketik `python -m venv [nama virtual environment]` untuk membuka virtual environment
 
-4. Akses ke virtual environment dengan cara ketik [nama virtual enviroment]\Scripts\activate
+4. Akses ke virtual environment dengan cara ketik `[nama virtual enviroment]\Scripts\activate`
 
-5. Install library FastAPI dan uvicorn dengan 
-``
-pip install fastapi uvicorn
-``\
+5. Install library FastAPI dan uvicorn dengan `pip install fastapi uvicorn`
 6. Jalankan server FastAPI dengan menggunakan `uvicorn meja:app --port 8000 --reload`.
 
 7. Akses dokumentasi API pada IP localhost yang disediakan di terminal dengan port 8000
