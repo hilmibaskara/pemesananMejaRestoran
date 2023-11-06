@@ -1,4 +1,4 @@
-# Reservation Microservice README
+# Restaurant Reservation Microservice README
 
 **Nama:** Hilmi Baskara Radanto\
 **NIM:** 18221072
