@@ -1,7 +1,7 @@
 # Reservation Microservice README
 
 **Nama:** Hilmi Baskara Radanto\
-**NIM:** [Your Student ID]
+**NIM:** 18221072
 
 Microservice ini dikembangkan sebagai bagian dari pemenuhan tugas kuliah II3160 Teknologi Sistem Terintegrasi.
 
