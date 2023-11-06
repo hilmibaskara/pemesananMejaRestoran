@@ -92,11 +92,3 @@ Akses langsung ke dokumentasi API pada
 ## Data Files
 
 Microservice ini memuat data dari file JSON yang bernama `tables.json` dan `reservations.json`. Pastikan untuk menjaga file-file ini dengan data yang valid.
-
-## Notes
-
-- Ensure that your Docker and network configurations are properly set up to avoid network issues when running the service in a container.
-
-- This README is provided as a template. Replace the placeholders in square brackets with your actual information.
-
-Feel free to customize this README according to your specific needs. It provides an overview of your microservice, describes its endpoints, explains how to use it, and highlights important considerations.
