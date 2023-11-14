@@ -7,7 +7,7 @@ Microservice ini dikembangkan sebagai bagian dari pemenuhan tugas kuliah II3160 
 
 ## Overview
 
-Microservice ini dibangun menggunakan FastAPI dan memungkinkan pengguna untuk mengelola reservasi dan status meja di sebuah restoran. Microservice ini menyediakan berbagai endpoints untuk melakukan operasi terkait reservasi dan meja. Layanan ini memuat data dari file JSON yang memungkinkan pengguna dapat berinteraksi dengannya melalui permintaan HTTP.
+Microservice ini dibangun menggunakan FastAPI dan memungkinkan pengguna untuk mengelola reservasi dan status meja di sebuah restoran. Microservice ini menyediakan berbagai endpoints untuk melakukan operasi terkait reservasi dan meja. Layanan ini memuat data dari file JSON yang memungkinkan pengguna dapat berinteraksi dengannya melalui permintaan HTTP. Kemudian juga sudah dilengkapi dengan autentikasi untuk meningkatkan keamanan serta terhindar dari akses yang tidak sah.
 
 ## Endpoints
 
@@ -87,7 +87,7 @@ Microservice ini dibangun menggunakan FastAPI dan memungkinkan pengguna untuk me
 ### Online
 
 Akses langsung ke dokumentasi API pada
-[http://20.198.196.252/docs](http://20.198.196.252/docs) untuk menguji endpoints dan memahami cara penggunaan microservice secara langsung.
+[http://20.6.7.104/docs](http://20.6.7.104/docs) untuk menguji endpoints dan memahami cara penggunaan microservice secara langsung.
 
 ## Data Files
 
