@@ -6,11 +6,11 @@ from typing import Annotated
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+import requests
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
 
 fake_users_db = {
     "hilmi": {
@@ -22,9 +22,7 @@ fake_users_db = {
     }
 }
 
-# Load the existing JSON data
-# with open("user.json", "r") as read_file:
-#     fake_users_db = json.load(read_file)
+
 with open("tables.json", "r") as read_file:
     data_tables = json.load(read_file)
 with open("reservations.json", "r") as read_file:
@@ -388,3 +386,91 @@ def reduce_table(current_user: Annotated[User, Depends(get_current_active_user)]
         json.dump(data_tables, write_file)
 
     return data_tables["tables"]
+
+# Get All Nutritions
+@app.get("/integrasi-nutrisi", tags=["Integrasi: Layanan Rekomendasi Minuman"])
+async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
+    url = 'https://bevbuddy.up.railway.app/nutritions'
+    headers = {
+        'accept': 'application/json',
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+    return response.json()
+
+# Get Recommendation History
+@app.get("/integrasi-get-recommendation", tags=["Integrasi: Layanan Rekomendasi Minuman"])
+async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
+    # login_headers = {
+    #     'accept': 'application/json',
+    # }
+
+    login_url = 'https://bevbuddy.up.railway.app/login'
+    login_data_string = {
+        'username': 'hilmi',
+        'password': 'string',
+    }
+
+    login_data_json=json.dumps(login_data_string)
+    login_response = requests.post(login_url, login_data_json)
+
+    if login_response.status_code == 200:
+        # Successful login, return the token
+        token = login_response.json().get("token")
+        print(token)
+    else:
+        print("tes")
+        # Handle unsuccessful login (you might want to raise an exception or handle it differently)
+        login_response.raise_for_status()
+        print(login_response.text)
+
+    url = 'https://bevbuddy.up.railway.app/recommendations'
+    headers = {
+        'accept': 'application/json',
+        'Authorization': 'Bearer ' + token,
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+    return response.json()
+
+# Create Recommendation
+@app.post("/integrasi-create-recommendation", tags=["Integrasi: Layanan Rekomendasi Minuman"])
+async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
+    login_url = 'https://bevbuddy.up.railway.app/login'
+    login_data_string = {
+        'username': 'hilmi',
+        'password': 'string',
+    }
+
+    login_data_json=json.dumps(login_data_string)
+    login_response = requests.post(login_url, login_data_json)
+
+    if login_response.status_code == 200:
+        # Successful login, return the token
+        token = login_response.json().get("token")
+        print(token)
+    else:
+        print("tes")
+        # Handle unsuccessful login (you might want to raise an exception or handle it differently)
+        login_response.raise_for_status()
+        print(login_response.text)
+
+    url = 'https://bevbuddy.up.railway.app/recommendations'
+    headers = {
+        'accept': 'application/json',
+        'Authorization': 'Bearer ' + token,
+    }
+
+    body = {
+        "activity": "sedentary",
+        "age": 20,
+        "gender": "Male",
+        "height": 171,
+        "max_rec": 5,
+        "mood": "happy",
+        "weather": "yes",
+        "weight": 63
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(body))
+    return response.json()
