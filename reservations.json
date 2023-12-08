@@ -3,6 +3,7 @@
         {
             "id_reservation": 1,
             "reserver_name": "Customer 1",
+            "id_user": 7,
             "id_table": 1,
             "hourstart": 12,
             "duration": 2
@@ -10,6 +11,7 @@
         {
             "id_reservation": 2,
             "reserver_name": "Customer 2",
+            "id_user": 1,
             "id_table": 2,
             "hourstart": 10,
             "duration": 3
@@ -17,9 +19,18 @@
         {
             "id_reservation": 3,
             "reserver_name": "hasd",
+            "id_user": 1,
             "id_table": 3,
             "hourstart": 19,
             "duration": 1
+        },
+        {
+            "id_reservation": 4,
+            "reserver_name": "hey jude",
+            "id_user": 1,
+            "id_table": 2,
+            "hourstart": 8,
+            "duration": 2
         }
     ]
 }

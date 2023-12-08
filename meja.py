@@ -34,6 +34,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
 
+saved_password= None
+
+bevbuddy_url = 'https://bevbuddy--uj4gj7u.thankfulbush-47818fd3.southeastasia.azurecontainerapps.io/'
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -49,7 +52,9 @@ def get_user(username: str):
            user_dict = {
                 "id_user" : user['id_user'],
                 "username" :  user['username'],
-                "nama_user": user['full_name'],
+                "full_name": user['full_name'],
+                "email" : user['email'],
+                "role" : user['role'],
                 "hashed_password": user['hashed_password'],
                 "password" : ""
            }
@@ -92,7 +97,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
+    user = get_user(username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -105,10 +110,12 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-@app.post("/register", tags=['Register'])
+@app.post("/register", tags=['User'])
 async def register_user(data: User):
-    dataUser_found = False
+    global bevbuddy_url
 
+    dataUser_found = False
+    
     for user in user_reservasi['user_reservasi']:
         if user['username'] == data.username:
             dataUser_found = True
@@ -121,22 +128,39 @@ async def register_user(data: User):
             "username" : data.username,
             "full_name" : data.full_name,
             "email": data.email,
+            "role": data.role,
             "hashed_password": get_password_hash(data.password)
         }
         user_reservasi['user_reservasi'].append(result)
         with open("user_reservasi.json", "w") as write_file:
             json.dump(user_reservasi, write_file)
-        return {"message": "User berhasil mendaftar"}
+
+        # Register ke API BevBuddy
+        register_url = bevbuddy_url + 'register'
+        register_data_string = {
+            "username": data.username,
+            "fullname": data.full_name,
+            "email": data.email,
+            "password": data.password,
+            "role": "customer",
+            "token": "string"
+        }
+
+        response = requests.post(register_url, data=json.dumps(register_data_string))
+
+        return response.json()
 
     raise HTTPException(
         status_code=404, detail=f'User not found'
     )
 
-@app.post("/token", response_model=Token)
+@app.post("/token", response_model=Token, tags=['User'])
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-):
+    ):
+    global saved_password
     user = authenticate_user(form_data.username, form_data.password)
+    saved_password=form_data.password
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -149,12 +173,11 @@ async def login_for_access_token(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-
-@app.get("/users/me/", response_model=User)
+@app.get("/users/me/", response_model=User, tags=['User'])
 async def read_users_me(
     current_user: Annotated[User, Depends(get_current_active_user)]
 ):
-    return current_user
+    return current_user, saved_password
 
 
 # @app.get("/users/me/items/")
@@ -201,20 +224,9 @@ def check_table_status(tables, id_table_input, hourstart_input):
                     if (row["hourstart"] == hourstart_input):
                         return row["status"]
 
-# Get reservation data by ID
-@app.get('/reservations/{reservation_id}', tags=["Pengaturan Reservasi"])
-async def get_reservation(reservation_id: int):
-    found = False
-    for reservation in data_reservations.get('reservations', []):
-        if reservation['id_reservation'] == reservation_id:
-            found = True
-            return reservation
-    if not found:
-        raise HTTPException(status_code=404, detail="Reservation not found")
-
 # Make a new reservation
 @app.post('/reservations', tags=["Pengaturan Reservasi"])
-async def create_reservation(reserver_name_input: str, id_table_input: int, hourstart_input: int, duration_input: int):
+async def create_reservation(reserver_name_input: str, id_table_input: int, hourstart_input: int, duration_input: int, current_user: Annotated[User, Depends(get_current_active_user)]):
     # Generate id_reservation
     reservations = data_reservations["reservations"]
     new_id_reservation = max(reservations, key=lambda x: x['id_reservation'])['id_reservation'] + 1
@@ -231,6 +243,7 @@ async def create_reservation(reserver_name_input: str, id_table_input: int, hour
     new_reservation = {
         "id_reservation": new_id_reservation,
         "reserver_name": reserver_name_input,
+        "id_user": current_user.id_user,
         "id_table": id_table_input,
         "hourstart": hourstart_input,
         "duration": duration_input
@@ -271,7 +284,7 @@ async def get_table_status(id_table_input: int, hourstart_input: int):
 
 # Update reservation
 @app.put('/reservation/{id_reservation}', tags=["Pengaturan Reservasi"])
-def update_reservation(id_reservation_input: int, new_reserver_name: str, new_id_table: int, new_hourstart: int, new_duration: int):
+async def update_reservation(id_reservation_input: int, new_reserver_name: str, new_id_table: int, new_hourstart: int, new_duration: int, current_user: Annotated[User, Depends(get_current_active_user)]):
     found = False
     idx = 0
     for reservation in data_reservations.get('reservations', []):
@@ -320,7 +333,7 @@ def update_reservation(id_reservation_input: int, new_reserver_name: str, new_id
 
 # Delete Reservation
 @app.delete('/reservations/{id_reservation}', tags=["Pengaturan Reservasi"])
-def delete_reservation(id_reservation_input: int):
+async def delete_reservation(id_reservation_input: int, current_user: Annotated[User, Depends(get_current_active_user)]):
     reservations = data_reservations["reservations"]
     reservation = next((r for r in reservations if r["id_reservation"] == id_reservation_input), None)
 
@@ -343,55 +356,82 @@ def delete_reservation(id_reservation_input: int):
         raise HTTPException(status_code=404, detail="Reservation not found")
     
 
-# Read reservation by Criteria
-@app.get('/reservations/{id_reservation}', tags=["Pengaturan Reservasi"])
-def get_reservation(id_reservation: int):
+# Get reservation by username's account
+@app.get('/reservations', tags=["Pengaturan Reservasi"])
+async def get_reservation_of_username(current_user: Annotated[User, Depends(get_current_active_user)]):
     reservations = data_reservations["reservations"]
-    reservation = next((r for r in reservations if r["id_reservation"] == id_reservation), None)
-    if reservation:
-        return reservation
+    found = False
+    user_reservation = []
+    for reservation in reservations:
+        if (reservation["id_user"] == current_user.id_user):
+            user_reservation.append(reservation)
+            found = True
+    if found:
+        return user_reservation
     raise HTTPException(status_code=404, detail="Reservation not found")
 
 
 # ADMIN ONLY SITUATION
-# Get all reservation data
-@app.get('/reservations', tags=["Pengaturan Reservasi"])
-async def get_reservations(current_user: Annotated[User, Depends(get_current_active_user)]):
-    return data_reservations["reservations"]
+# Get reservation data by ID
+@app.get('/reservations/{reservation_id}', tags=["Pengaturan Reservasi"])
+async def get_reservation(reservation_id: int, current_user: Annotated[User, Depends(get_current_active_user)]):
+    if (current_user.role != 'admin'):
+        return "admin only"
+    else:
+        found = False
+        for reservation in data_reservations.get('reservations', []):
+            if reservation['id_reservation'] == reservation_id:
+                found = True
+                return reservation
+        if not found:
+            raise HTTPException(status_code=404, detail="Reservation not found")
+        
+# @app.get('/reservations', tags=["Pengaturan Reservasi"])
+# async def get_all_reservations(current_user: Annotated[User, Depends(get_current_active_user)]):
+#     if (current_user.role != 'admin'):
+#         return "admin only"
+#     else:
+#         return data_reservations["reservations"]
 
 @app.post('/tables', tags=["Pengaturan Meja"])
 def add_table(current_user: Annotated[User, Depends(get_current_active_user)]):
-    tables = data_tables["tables"]
-    new_id_table = max(tables, key=lambda x: x['id_table'])['id_table'] + 1
-    for i in range(8, 22):
-        new_table = {
-                "id_table": new_id_table,
-                "hourstart": i,
-                "status": True
-        }
-        tables.append(new_table)
-    with open("tables.json", "w") as write_file:
-        json.dump(data_tables, write_file)
-    return tables
+    if (current_user.role != 'admin'):
+        return "admin only"
+    else:
+        tables = data_tables["tables"]
+        new_id_table = max(tables, key=lambda x: x['id_table'])['id_table'] + 1
+        for i in range(8, 22):
+            new_table = {
+                    "id_table": new_id_table,
+                    "hourstart": i,
+                    "status": True
+            }
+            tables.append(new_table)
+        with open("tables.json", "w") as write_file:
+            json.dump(data_tables, write_file)
+        return tables
 
 @app.delete('/tables', tags=["Pengaturan Meja"])
 def reduce_table(current_user: Annotated[User, Depends(get_current_active_user)]):
-    tables = data_tables["tables"]
-    reduce_id_table = max(tables, key=lambda x: x['id_table'])['id_table']
-    
-    new_tables = []
-    for row in tables:
-        if row["id_table"] != reduce_id_table:
-            new_tables.append(row)
-        else:
-            break
+    if (current_user.role != 'admin'):
+        return "admin only"
+    else:
+        tables = data_tables["tables"]
+        reduce_id_table = max(tables, key=lambda x: x['id_table'])['id_table']
+        
+        new_tables = []
+        for row in tables:
+            if row["id_table"] != reduce_id_table:
+                new_tables.append(row)
+            else:
+                break
 
-    data_tables["tables"] = new_tables
-    # Save the updated data back to the JSON file
-    with open("tables.json", "w") as write_file:
-        json.dump(data_tables, write_file)
+        data_tables["tables"] = new_tables
+        # Save the updated data back to the JSON file
+        with open("tables.json", "w") as write_file:
+            json.dump(data_tables, write_file)
 
-    return data_tables["tables"]
+        return data_tables["tables"]
 
 # Get All Menus
 @app.get("/integrasi-menu", tags=["Integrasi: Layanan Beverage Buddy"])
@@ -419,7 +459,9 @@ async def integrasi_get_menu_by_id(id_menu: int, token: str = Depends(oauth2_sch
 # Get All Nutritions
 @app.get("/integrasi-nutrisi", tags=["Integrasi: Layanan Beverage Buddy"])
 async def integrasi_get_nutrisi(token: str = Depends(oauth2_scheme)):
-    url = 'https://bevbuddy.up.railway.app/nutritions'
+    global bevbuddy_url
+
+    url = bevbuddy_url + 'nutritions'
     headers = {
         'accept': 'application/json',
     }
@@ -430,7 +472,9 @@ async def integrasi_get_nutrisi(token: str = Depends(oauth2_scheme)):
 # Get Nutrition by ID
 @app.get("/integrasi-nutritions-by-id/{id_nutritions}", tags=["Integrasi: Layanan Beverage Buddy"])
 async def integrasi_get_nutritions_by_id(id_nutritions: int, token: str = Depends(oauth2_scheme)):
-    url = 'https://bevbuddy.up.railway.app/nutritionss' + f'/{id_nutritions}'
+    global bevbuddy_url
+
+    url = bevbuddy_url + f'/{id_nutritions}'
     print(url)
     headers = {
         'accept': 'application/json',
@@ -445,8 +489,9 @@ async def integrasi_get_recommendation(token: str = Depends(oauth2_scheme)):
     # login_headers = {
     #     'accept': 'application/json',
     # }
+    global bevbuddy_url
 
-    login_url = 'https://bevbuddy.up.railway.app/login'
+    login_url = bevbuddy_url + 'login'
     login_data_string = {
         'username': 'hilmi',
         'password': 'string',
@@ -465,7 +510,7 @@ async def integrasi_get_recommendation(token: str = Depends(oauth2_scheme)):
         login_response.raise_for_status()
         print(login_response.text)
 
-    url = 'https://bevbuddy.up.railway.app/recommendations'
+    url = bevbuddy_url + 'recommendations'
     headers = {
         'accept': 'application/json',
         'Authorization': 'Bearer ' + token,
@@ -476,11 +521,13 @@ async def integrasi_get_recommendation(token: str = Depends(oauth2_scheme)):
 
 # Create Recommendation
 @app.post("/integrasi-create-recommendation", tags=["Integrasi: Layanan Beverage Buddy"])
-async def integrasi_detail_me(req: RecommendationReq, token: str = Depends(oauth2_scheme)):
-    login_url = 'https://bevbuddy.up.railway.app/login'
+async def integrasi_detail_me(req: RecommendationReq, current_user: Annotated[User, Depends(get_current_active_user)]):
+    global saved_password
+
+    login_url = bevbuddy_url + 'login'
     login_data_string = {
-        'username': 'hilmi',
-        'password': 'string',
+        'username': current_user.username,
+        'password': saved_password,
     }
 
     login_data_json=json.dumps(login_data_string)
@@ -494,7 +541,7 @@ async def integrasi_detail_me(req: RecommendationReq, token: str = Depends(oauth
         # Handle unsuccessful login (you might want to raise an exception or handle it differently)
         login_response.raise_for_status()
 
-    url = 'https://bevbuddy.up.railway.app/recommendations'
+    url = bevbuddy_url + 'recommendations'
     headers = {
         'accept': 'application/json',
         'Authorization': 'Bearer ' + token,

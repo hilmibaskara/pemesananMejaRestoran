@@ -29,6 +29,7 @@ class RecommendationReq(BaseModel):
 class Reservation(BaseModel):
     id_reservation: int
     reserver_name: str
+    id_user: int
     id_table: int
     hourstart: int
     duration: int
@@ -44,13 +45,31 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    username: str or None = None
+    username: str
 
 class User(BaseModel):
     username: str
     email: str or None = None
     full_name: str or None = None
+    role: str
     password: str
 
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "username" : "username",
+                "email" : "email@example.com",
+                "full_name" : "full_name",
+                "role" : "customer",
+                "password" : "string"
+            }
+        }
+
 class UserInDB(User):
+    id_user : int
+    username : str
+    full_name: str or None = None
+    email: str or None = None
+    role: str   
     hashed_password: str
+    disabled: bool or None = None

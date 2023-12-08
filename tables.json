@@ -73,12 +73,12 @@
         {
             "id_table": 2,
             "hourstart": 8,
-            "status": true
+            "status": false
         },
         {
             "id_table": 2,
             "hourstart": 9,
-            "status": true
+            "status": false
         },
         {
             "id_table": 2,
