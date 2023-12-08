@@ -11,6 +11,6 @@ COPY requirements.txt .
 # Install any necessary dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+EXPOSE 8000
 
-EXPOSE 8080
+CMD [ "python", "main.py" ]
