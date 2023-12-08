@@ -1,7 +1,5 @@
 FROM python:3.11
 
-ADD app.py .
-
 COPY . /pemesananMejaRestoran
 WORKDIR /pemesananMejaRestoran
 
