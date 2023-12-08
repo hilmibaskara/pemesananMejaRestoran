@@ -1,7 +1,8 @@
 FROM python:3.11
 
-COPY . /pemesananMejaRestoran
 WORKDIR /pemesananMejaRestoran
+
+COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
