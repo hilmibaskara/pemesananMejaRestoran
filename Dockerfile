@@ -5,11 +5,14 @@ ADD app.py .
 COPY . /pemesananMejaRestoran
 WORKDIR /pemesananMejaRestoran
 
-# Copy only the requirements file to leverage Docker cache
-COPY requirements.txt .
+RUN python -m pip install --upgrade pip
 
-# Install any necessary dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apk update && apk add python3-dev \
+                        gcc \
+                        libc-dev \
+                        libffi-dev 
+
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 EXPOSE 8000
 
