@@ -1,6 +1,6 @@
 FROM python:3
 
-ADD meja.py .
+ADD main.py .
 
 COPY . /pemesananMejaRestoran
 WORKDIR /pemesananMejaRestoran
