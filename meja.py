@@ -1,12 +1,12 @@
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
 import json
 from typing import Annotated
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import requests
+from models.model import RecommendationReq, Reservation, Table, Token, TokenData, User, UserInDB
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
@@ -17,45 +17,16 @@ fake_users_db = {
         "username": "hilmi",
         "full_name": "hilmi BR",
         "email": "hilmibr@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "disabled": False,
+        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW"
     }
 }
-
 
 with open("tables.json", "r") as read_file:
     data_tables = json.load(read_file)
 with open("reservations.json", "r") as read_file:
     data_reservations = json.load(read_file)
-
-class Reservation(BaseModel):
-    id_reservation: int
-    reserver_name: str
-    id_table: int
-    hourstart: int
-    duration: int
-
-# Pydantic model for Table
-class Table(BaseModel):
-    id_table: int
-    hourstart: int
-    status: bool
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    username: str or None = None
-
-class User(BaseModel):
-    username: str
-    email: str or None = None
-    full_name: str or None = None
-    disabled: bool or None = None
-
-class UserInDB(User):
-    hashed_password: str
+with open("user_reservasi.json","r") as read_file:
+	user_reservasi = json.load(read_file)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -72,14 +43,23 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+def get_user(username: str):
+    for user in user_reservasi['user_reservasi']:
+        if user['username'] == username:
+           user_dict = {
+                "id_user" : user['id_user'],
+                "username" :  user['username'],
+                "nama_user": user['full_name'],
+                "hashed_password": user['hashed_password'],
+                "password" : ""
+           }
+           return UserInDB(**user_dict)
+    return None
 
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
+
+def authenticate_user(username: str, password: str):
+    user = get_user(username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -125,12 +105,38 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
+@app.post("/register", tags=['Register'])
+async def register_user(data: User):
+    dataUser_found = False
+
+    for user in user_reservasi['user_reservasi']:
+        if user['username'] == data.username:
+            dataUser_found = True
+            return f"User {user['id_user']} dengan username {user['username']} telah terdaftar."
+
+    if not dataUser_found:
+        i = len(user_reservasi['user_reservasi']) + 1
+        result = {
+            "id_user": i,
+            "username" : data.username,
+            "full_name" : data.full_name,
+            "email": data.email,
+            "hashed_password": get_password_hash(data.password)
+        }
+        user_reservasi['user_reservasi'].append(result)
+        with open("user_reservasi.json", "w") as write_file:
+            json.dump(user_reservasi, write_file)
+        return {"message": "User berhasil mendaftar"}
+
+    raise HTTPException(
+        status_code=404, detail=f'User not found'
+    )
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -196,7 +202,7 @@ def check_table_status(tables, id_table_input, hourstart_input):
                         return row["status"]
 
 # Get reservation data by ID
-@app.get('/reservations/{reservation_id}')
+@app.get('/reservations/{reservation_id}', tags=["Pengaturan Reservasi"])
 async def get_reservation(reservation_id: int):
     found = False
     for reservation in data_reservations.get('reservations', []):
@@ -207,7 +213,7 @@ async def get_reservation(reservation_id: int):
         raise HTTPException(status_code=404, detail="Reservation not found")
 
 # Make a new reservation
-@app.post('/reservations')
+@app.post('/reservations', tags=["Pengaturan Reservasi"])
 async def create_reservation(reserver_name_input: str, id_table_input: int, hourstart_input: int, duration_input: int):
     # Generate id_reservation
     reservations = data_reservations["reservations"]
@@ -243,7 +249,7 @@ async def create_reservation(reserver_name_input: str, id_table_input: int, hour
     return new_reservation
 
 # Check table status by id_table and hourstart
-@app.get('/tables/{id_table}/status')
+@app.get('/tables/{id_table}/status', tags=["Pengaturan Meja"])
 async def get_table_status(id_table_input: int, hourstart_input: int):
     tables = data_tables["tables"]
 
@@ -264,7 +270,7 @@ async def get_table_status(id_table_input: int, hourstart_input: int):
     return status
 
 # Update reservation
-@app.put('/reservation/{id_reservation}')
+@app.put('/reservation/{id_reservation}', tags=["Pengaturan Reservasi"])
 def update_reservation(id_reservation_input: int, new_reserver_name: str, new_id_table: int, new_hourstart: int, new_duration: int):
     found = False
     idx = 0
@@ -313,7 +319,7 @@ def update_reservation(id_reservation_input: int, new_reserver_name: str, new_id
         raise HTTPException(status_code=404, detail="Reservation not found")
 
 # Delete Reservation
-@app.delete('/reservations/{id_reservation}')
+@app.delete('/reservations/{id_reservation}', tags=["Pengaturan Reservasi"])
 def delete_reservation(id_reservation_input: int):
     reservations = data_reservations["reservations"]
     reservation = next((r for r in reservations if r["id_reservation"] == id_reservation_input), None)
@@ -338,7 +344,7 @@ def delete_reservation(id_reservation_input: int):
     
 
 # Read reservation by Criteria
-@app.get('/reservations/{id_reservation}')
+@app.get('/reservations/{id_reservation}', tags=["Pengaturan Reservasi"])
 def get_reservation(id_reservation: int):
     reservations = data_reservations["reservations"]
     reservation = next((r for r in reservations if r["id_reservation"] == id_reservation), None)
@@ -349,11 +355,11 @@ def get_reservation(id_reservation: int):
 
 # ADMIN ONLY SITUATION
 # Get all reservation data
-@app.get('/reservations')
+@app.get('/reservations', tags=["Pengaturan Reservasi"])
 async def get_reservations(current_user: Annotated[User, Depends(get_current_active_user)]):
     return data_reservations["reservations"]
 
-@app.post('/tables')
+@app.post('/tables', tags=["Pengaturan Meja"])
 def add_table(current_user: Annotated[User, Depends(get_current_active_user)]):
     tables = data_tables["tables"]
     new_id_table = max(tables, key=lambda x: x['id_table'])['id_table'] + 1
@@ -368,7 +374,7 @@ def add_table(current_user: Annotated[User, Depends(get_current_active_user)]):
         json.dump(data_tables, write_file)
     return tables
 
-@app.delete('/tables')
+@app.delete('/tables', tags=["Pengaturan Meja"])
 def reduce_table(current_user: Annotated[User, Depends(get_current_active_user)]):
     tables = data_tables["tables"]
     reduce_id_table = max(tables, key=lambda x: x['id_table'])['id_table']
@@ -387,9 +393,32 @@ def reduce_table(current_user: Annotated[User, Depends(get_current_active_user)]
 
     return data_tables["tables"]
 
+# Get All Menus
+@app.get("/integrasi-menu", tags=["Integrasi: Layanan Beverage Buddy"])
+async def integrasi_get_menu_all(token: str = Depends(oauth2_scheme)):
+    url = 'https://bevbuddy.up.railway.app/menus'
+    headers = {
+        'accept': 'application/json',
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+    return response.json()
+
+# Get Menu by ID
+@app.get("/integrasi-menu-by-id/{id_menu}", tags=["Integrasi: Layanan Beverage Buddy"])
+async def integrasi_get_menu_by_id(id_menu: int, token: str = Depends(oauth2_scheme)):
+    url = 'https://bevbuddy.up.railway.app/menus' + f'/{id_menu}'
+    print(url)
+    headers = {
+        'accept': 'application/json',
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+    return response.json()
+
 # Get All Nutritions
-@app.get("/integrasi-nutrisi", tags=["Integrasi: Layanan Rekomendasi Minuman"])
-async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
+@app.get("/integrasi-nutrisi", tags=["Integrasi: Layanan Beverage Buddy"])
+async def integrasi_get_nutrisi(token: str = Depends(oauth2_scheme)):
     url = 'https://bevbuddy.up.railway.app/nutritions'
     headers = {
         'accept': 'application/json',
@@ -398,9 +427,21 @@ async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
     response = requests.get(url, headers=headers, timeout=10)
     return response.json()
 
+# Get Nutrition by ID
+@app.get("/integrasi-nutritions-by-id/{id_nutritions}", tags=["Integrasi: Layanan Beverage Buddy"])
+async def integrasi_get_nutritions_by_id(id_nutritions: int, token: str = Depends(oauth2_scheme)):
+    url = 'https://bevbuddy.up.railway.app/nutritionss' + f'/{id_nutritions}'
+    print(url)
+    headers = {
+        'accept': 'application/json',
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+    return response.json()
+
 # Get Recommendation History
-@app.get("/integrasi-get-recommendation", tags=["Integrasi: Layanan Rekomendasi Minuman"])
-async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
+@app.get("/integrasi-get-recommendation", tags=["Integrasi: Layanan Beverage Buddy"])
+async def integrasi_get_recommendation(token: str = Depends(oauth2_scheme)):
     # login_headers = {
     #     'accept': 'application/json',
     # }
@@ -434,8 +475,8 @@ async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
     return response.json()
 
 # Create Recommendation
-@app.post("/integrasi-create-recommendation", tags=["Integrasi: Layanan Rekomendasi Minuman"])
-async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
+@app.post("/integrasi-create-recommendation", tags=["Integrasi: Layanan Beverage Buddy"])
+async def integrasi_detail_me(req: RecommendationReq, token: str = Depends(oauth2_scheme)):
     login_url = 'https://bevbuddy.up.railway.app/login'
     login_data_string = {
         'username': 'hilmi',
@@ -450,10 +491,8 @@ async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
         token = login_response.json().get("token")
         print(token)
     else:
-        print("tes")
         # Handle unsuccessful login (you might want to raise an exception or handle it differently)
         login_response.raise_for_status()
-        print(login_response.text)
 
     url = 'https://bevbuddy.up.railway.app/recommendations'
     headers = {
@@ -462,14 +501,14 @@ async def integrasi_detail_me(token: str = Depends(oauth2_scheme)):
     }
 
     body = {
-        "activity": "sedentary",
-        "age": 20,
-        "gender": "Male",
-        "height": 171,
-        "max_rec": 5,
-        "mood": "happy",
-        "weather": "yes",
-        "weight": 63
+        "activity": req.activity,
+        "age": req.age,
+        "gender": req.gender,
+        "height": req.height,
+        "max_rec": req.max_rec,
+        "mood": req.mood,
+        "weather": req.weather,
+        "weight": req.weight
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(body))

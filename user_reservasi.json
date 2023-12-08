@@ -1,0 +1,18 @@
+{
+    "user_reservasi": [
+        {
+            "id_user": 1,
+            "username": "hilmi",
+            "full_name": "hilmi BR",
+            "email": "hilmibr@example.com",
+            "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW"
+        },
+        {
+            "id_user": 2,
+            "username": "hilmi2",
+            "full_name": "string",
+            "email": "string",
+            "hashed_password": "$2b$12$xCyM5PClUWEbXrUYiu6qtu6DXDlfkJ.bPNmhG8SRhTxeCgVRQr/Ry"
+        }
+    ]
+}
