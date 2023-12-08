@@ -1,0 +1,1 @@
+web: uvicorn meja:meja --host:0.0.0.0 --port $port

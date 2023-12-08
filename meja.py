@@ -6,21 +6,96 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import requests
-from models.model import RecommendationReq, Reservation, Table, Token, TokenData, User, UserInDB, Consultation
+from pydantic import BaseModel
+from typing import Literal
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+class RecommendationReq(BaseModel):
+    gender: Literal ["Male", "Female"]
+    age: int
+    weight: float
+    height: float
+    activity: Literal ["sedentary", "lightly_active", "moderately_active", "very_active", "extra_active"]
+    mood: Literal ["happy", "loved", "focus", "chill", "sad", "scared", "angry", "neutral"] = None
+    weather: Literal ["yes", "no"] = None,
+    max_rec: int = 5
 
-fake_users_db = {
-    "hilmi": {
-        "username": "hilmi",
-        "full_name": "hilmi BR",
-        "email": "hilmibr@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW"
-    }
-}
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "gender": "Male",
+                "age": 20,
+                "weight": 63.0,
+                "height": 171.0,
+                "activity": ["sedentary", "lightly_active", "moderately_active", "very_active", "extra_active"],
+                "mood": ["happy", "loved", "focus", "chill", "sad", "scared", "angry", "neutral"],
+                "weather": "['yes', 'no'] - Are you concerned about the weather?",
+                "max_rec": 5
+            }
+        }
 
+
+class Reservation(BaseModel):
+    id_reservation: int
+    reserver_name: str
+    id_user: int
+    id_table: int
+    hourstart: int
+    duration: int
+
+# Pydantic model for Table
+class Table(BaseModel):
+    id_table: int
+    hourstart: int
+    status: bool
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: str
+
+class User(BaseModel):
+    username: str
+    email: str or None = None
+    full_name: str or None = None
+    role: str
+    password: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "username" : "username",
+                "email" : "email@example.com",
+                "full_name" : "full_name",
+                "role" : "customer",
+                "password" : "string"
+            }
+        }
+
+class UserInDB(User):
+    id_user : int
+    username : str
+    full_name: str or None = None
+    email: str or None = None
+    role: str   
+    hashed_password: str
+    disabled: bool or None = None
+
+class Consultation(BaseModel):
+    consultation_date: str
+    consultation_time: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "consultation_date": "2023-12-31",
+                "consultation_time": "10:00"
+            }
+        }
 with open("tables.json", "r") as read_file:
     data_tables = json.load(read_file)
 with open("reservations.json", "r") as read_file:
@@ -115,44 +190,46 @@ async def register_user(data: User):
     global bevbuddy_url
 
     dataUser_found = False
-    
-    for user in user_reservasi['user_reservasi']:
-        if user['username'] == data.username:
-            dataUser_found = True
-            return f"User {user['id_user']} dengan username {user['username']} telah terdaftar."
+    if data.role != 'customer':
+        return { "message" : "tidak bisa register dengan role selain customer"}
+    else:
+        for user in user_reservasi['user_reservasi']:
+            if user['username'] == data.username:
+                dataUser_found = True
+                return f"User {user['id_user']} dengan username {user['username']} telah terdaftar."
 
-    if not dataUser_found:
-        i = len(user_reservasi['user_reservasi']) + 1
-        result = {
-            "id_user": i,
-            "username" : data.username,
-            "full_name" : data.full_name,
-            "email": data.email,
-            "role": data.role,
-            "hashed_password": get_password_hash(data.password)
-        }
-        user_reservasi['user_reservasi'].append(result)
-        with open("user_reservasi.json", "w") as write_file:
-            json.dump(user_reservasi, write_file)
+        if not dataUser_found:
+            i = len(user_reservasi['user_reservasi']) + 1
+            result = {
+                "id_user": i,
+                "username" : data.username,
+                "full_name" : data.full_name,
+                "email": data.email,
+                "role": data.role,
+                "hashed_password": get_password_hash(data.password)
+            }
+            user_reservasi['user_reservasi'].append(result)
+            with open("user_reservasi.json", "w") as write_file:
+                json.dump(user_reservasi, write_file)
 
-        # Register ke API BevBuddy
-        register_url = bevbuddy_url + 'register'
-        register_data_string = {
-            "username": data.username,
-            "fullname": data.full_name,
-            "email": data.email,
-            "password": data.password,
-            "role": "customer",
-            "token": "string"
-        }
+            # Register ke API BevBuddy
+            register_url = bevbuddy_url + 'register'
+            register_data_string = {
+                "username": data.username,
+                "fullname": data.full_name,
+                "email": data.email,
+                "password": data.password,
+                "role": "customer",
+                "token": "string"
+            }
 
-        response = requests.post(register_url, data=json.dumps(register_data_string))
+            response = requests.post(register_url, data=json.dumps(register_data_string))
 
-        return response.json()
+            return response.json()
 
-    raise HTTPException(
-        status_code=404, detail=f'User not found'
-    )
+        raise HTTPException(
+            status_code=404, detail=f'User not found'
+        )
 
 @app.post("/token", response_model=Token, tags=['User'])
 async def login_for_access_token(
@@ -177,7 +254,7 @@ async def login_for_access_token(
 async def read_users_me(
     current_user: Annotated[User, Depends(get_current_active_user)]
 ):
-    return current_user, saved_password
+    return current_user
 
 
 # @app.get("/users/me/items/")
@@ -263,7 +340,7 @@ async def create_reservation(reserver_name_input: str, id_table_input: int, hour
 
 # Check table status by id_table and hourstart
 @app.get('/tables/{id_table}/status', tags=["Pengaturan Meja"])
-async def get_table_status(id_table_input: int, hourstart_input: int):
+async def get_table_status(id_table_input: int, hourstart_input: int, current_user: Annotated[User, Depends(get_current_active_user)]):
     tables = data_tables["tables"]
 
     def table_status(tables, id_table_input, hourstart_input):
@@ -285,75 +362,83 @@ async def get_table_status(id_table_input: int, hourstart_input: int):
 # Update reservation
 @app.put('/reservation/{id_reservation}', tags=["Pengaturan Reservasi"])
 async def update_reservation(id_reservation_input: int, new_reserver_name: str, new_id_table: int, new_hourstart: int, new_duration: int, current_user: Annotated[User, Depends(get_current_active_user)]):
-    found = False
-    idx = 0
-    for reservation in data_reservations.get('reservations', []):
-        if reservation['id_reservation'] == id_reservation_input:
-            found = True
-            reservations = data_reservations["reservations"]
-            reservation = next((r for r in reservations if r["id_reservation"] == id_reservation_input), None)
+    if (current_user.role != 'admin'):
+        return "admin only"
+    else:
+        found = False
+        idx = 0
+        for reservation in data_reservations.get('reservations', []):
+            if reservation['id_reservation'] == id_reservation_input:
+                found = True
+                reservations = data_reservations["reservations"]
+                reservation = next((r for r in reservations if r["id_reservation"] == id_reservation_input), None)
 
-            # Ngubah status ketersediaan mejanya dulu yang tadinya false jadi true
+                # Ngubah status ketersediaan mejanya dulu yang tadinya false jadi true
+                id_table_input = reservation["id_table"]
+                hourstart_input = reservation["hourstart"]
+                duration_input = reservation["duration"]
+
+                tables = data_tables["tables"]
+                table_to_true(tables, id_table_input, hourstart_input, duration_input)
+
+                temp_hourstart_input = hourstart_input
+                for i in range(duration_input):
+                    table_status = check_table_status(tables, id_table_input, temp_hourstart_input)
+                    if (table_status == False):
+                        raise HTTPException(status_code=400, detail="No available tables for the requested time")
+                    temp_hourstart_input += 1
+                
+                reservations[idx] = {
+                    "id_reservation": id_reservation_input,
+                    "reserver_name": new_reserver_name,
+                    "id_table": new_id_table,
+                    "hourstart": new_hourstart,
+                    "duration": new_duration
+                }
+
+                # update Table table data
+                table_to_false(tables, new_id_table, new_hourstart, new_duration)
+
+                data_tables["tables"] = tables
+                data_reservations["reservations"] = reservations
+                with open("tables.json", "w") as write_file:
+                    json.dump(data_tables, write_file)
+                with open("reservations.json", "w") as write_file:
+                    json.dump(data_reservations, write_file)
+
+                return reservations[idx]
+            idx+=1
+        if not found:
+            raise HTTPException(status_code=404, detail="Reservation not found")
+
+# Delete Reservation
+@app.delete('/reservations/{id_reservation}', tags=["Pengaturan Reservasi"])
+async def delete_reservation(id_reservation_input: int, current_user: Annotated[User, Depends(get_current_active_user)]):
+    if (current_user.role != 'admin'):
+        return "admin only"
+    else:
+        reservations = data_reservations["reservations"]
+        reservation = next((r for r in reservations if r["id_reservation"] == id_reservation_input), None)
+
+        if reservation is not None:
             id_table_input = reservation["id_table"]
             hourstart_input = reservation["hourstart"]
             duration_input = reservation["duration"]
 
             tables = data_tables["tables"]
             table_to_true(tables, id_table_input, hourstart_input, duration_input)
-
-            temp_hourstart_input = hourstart_input
-            for i in range(duration_input):
-                table_status = check_table_status(tables, id_table_input, temp_hourstart_input)
-                if (table_status == False):
-                    raise HTTPException(status_code=400, detail="No available tables for the requested time")
-                temp_hourstart_input += 1
-            
-            reservations[idx] = {
-                "id_reservation": id_reservation_input,
-                "reserver_name": new_reserver_name,
-                "id_table": new_id_table,
-                "hourstart": new_hourstart,
-                "duration": new_duration
-            }
-
-            # update Table table data
-            table_to_false(tables, new_id_table, new_hourstart, new_duration)
-
-            data_tables["tables"] = tables
-            data_reservations["reservations"] = reservations
-            with open("tables.json", "w") as write_file:
-                json.dump(data_tables, write_file)
-            with open("reservations.json", "w") as write_file:
-                json.dump(data_reservations, write_file)
-
-            return reservations[idx]
-        idx+=1
-    if not found:
-        raise HTTPException(status_code=404, detail="Reservation not found")
-
-# Delete Reservation
-@app.delete('/reservations/{id_reservation}', tags=["Pengaturan Reservasi"])
-async def delete_reservation(id_reservation_input: int, current_user: Annotated[User, Depends(get_current_active_user)]):
-    reservations = data_reservations["reservations"]
-    reservation = next((r for r in reservations if r["id_reservation"] == id_reservation_input), None)
-
-    if reservation is not None:
-        id_table_input = reservation["id_table"]
-        hourstart_input = reservation["hourstart"]
-        duration_input = reservation["duration"]
-
-        tables = data_tables["tables"]
-        table_to_true(tables, id_table_input, hourstart_input, duration_input)
-        for i, reservation in enumerate(reservations):
-            if reservation["id_reservation"] == id_reservation_input:
-                deleted_reservation = reservations[i]
-                reservations.pop(i)
-                data_reservations["reservations"] = reservations
-                with open("reservations.json", "w") as write_file:
-                    json.dump(data_reservations, write_file)
-                return deleted_reservation
-    else:
-        raise HTTPException(status_code=404, detail="Reservation not found")
+            for i, reservation in enumerate(reservations):
+                if reservation["id_reservation"] == id_reservation_input:
+                    deleted_reservation = reservations[i]
+                    reservations.pop(i)
+                    data_reservations["reservations"] = reservations
+                    with open("reservations.json", "w") as write_file:
+                        json.dump(data_reservations, write_file)
+                    with open("tables.json", "w") as write_file:
+                        json.dump(tables, write_file)
+                    return deleted_reservation
+        else:
+            raise HTTPException(status_code=404, detail="Reservation not found")
     
 
 # Get reservation by username's account
@@ -436,18 +521,21 @@ def reduce_table(current_user: Annotated[User, Depends(get_current_active_user)]
 # Get All Menus
 @app.get("/integrasi-menu", tags=["Integrasi: Layanan Beverage Buddy"])
 async def integrasi_get_menu_all(token: str = Depends(oauth2_scheme)):
-    url = 'https://bevbuddy.up.railway.app/menus'
+    global bevbuddy_url
+    
+    url = bevbuddy_url + "menus"
     headers = {
         'accept': 'application/json',
     }
 
     response = requests.get(url, headers=headers, timeout=10)
+    print(response.status_code)
     return response.json()
 
 # Get Menu by ID
 @app.get("/integrasi-menu-by-id/{id_menu}", tags=["Integrasi: Layanan Beverage Buddy"])
 async def integrasi_get_menu_by_id(id_menu: int, token: str = Depends(oauth2_scheme)):
-    url = 'https://bevbuddy.up.railway.app/menus' + f'/{id_menu}'
+    url = bevbuddy_url + "menus" + f'/{id_menu}'
     print(url)
     headers = {
         'accept': 'application/json',
@@ -469,19 +557,6 @@ async def integrasi_get_nutrisi(token: str = Depends(oauth2_scheme)):
     response = requests.get(url, headers=headers, timeout=10)
     return response.json()
 
-# Get Nutrition by ID
-@app.get("/integrasi-nutritions-by-id/{id_nutritions}", tags=["Integrasi: Layanan Beverage Buddy"])
-async def integrasi_get_nutritions_by_id(id_nutritions: int, token: str = Depends(oauth2_scheme)):
-    global bevbuddy_url
-
-    url = bevbuddy_url + f'/{id_nutritions}'
-    print(url)
-    headers = {
-        'accept': 'application/json',
-    }
-
-    response = requests.get(url, headers=headers, timeout=10)
-    return response.json()
 
 # Get Recommendation History
 @app.get("/integrasi-get-recommendation", tags=["Integrasi: Layanan Beverage Buddy"])

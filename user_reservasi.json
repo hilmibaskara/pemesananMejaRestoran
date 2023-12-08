@@ -1,1 +1,84 @@
-{"user_reservasi": [{"id_user": 1, "username": "hilmi", "full_name": "hilmi BR", "email": "hilmibr@example.com", "role": "admin", "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW"}, {"id_user": 2, "username": "hilmi2", "full_name": "string", "role": "customer", "email": "string", "hashed_password": "$2b$12$xCyM5PClUWEbXrUYiu6qtu6DXDlfkJ.bPNmhG8SRhTxeCgVRQr/Ry"}, {"id_user": 3, "username": "hilmi3", "full_name": "string", "role": "customer", "email": "string", "hashed_password": "$2b$12$eGgGAXnWaLWAQu6CE4dcsu3bAXjcMpmup8KrYIkcYIBExfGZFVHsS"}, {"id_user": 4, "username": "hilmi4", "full_name": "string", "role": "customer", "email": "string", "hashed_password": "$2b$12$1rwyamtkECOFU4ORLGIwdOz6cHLUsLpzB6w3sO0jwndw3a6YvBoUW"}, {"id_user": 5, "username": "hilmi6", "full_name": "string", "role": "customer", "email": "string", "hashed_password": "$2b$12$o2fryos9eicOlyABwp5Z8uH6p9pSwX4SVQb0V39my/loTVzK4FB4K"}, {"id_user": 6, "username": "hilmi7", "full_name": "string", "role": "customer", "email": "string", "hashed_password": "$2b$12$sxmZKYhUkY791.DDbKPo9u2yiwGq.dHMg4SvB.tJ5lmE530i5S/YW"}, {"id_user": 7, "username": "hilmi17", "full_name": "string", "email": "string", "role": "admin", "hashed_password": "$2b$12$PITF7hDIEl2q2FtaKiHFB.SRC8xf5iRNzPPexgXFy8CWIdO2UU1YK"}, {"id_user": 8, "username": "hilmi27", "full_name": "full_name", "email": "email@example.com", "role": "customer", "hashed_password": "$2b$12$zIqeRc8d3Yd2z0Ui2szQyuSfpseSzrKfbLCxN1c1xH9cAJkWme3tK"}, {"id_user": 9, "username": "hilmi37", "full_name": "full_name", "email": "email@example.com", "role": "customer", "hashed_password": "$2b$12$CKA1p/9s3AUYXgDvthm1cOpbyPDzT.x4irpn92HbMVWYq.x03nqLK"}]}
+{
+    "user_reservasi": [
+        {
+            "id_user": 1,
+            "username": "hilmi",
+            "full_name": "hilmi BR",
+            "email": "hilmibr@example.com",
+            "role": "admin",
+            "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW"
+        },
+        {
+            "id_user": 2,
+            "username": "hilmi2",
+            "full_name": "string",
+            "role": "customer",
+            "email": "string",
+            "hashed_password": "$2b$12$xCyM5PClUWEbXrUYiu6qtu6DXDlfkJ.bPNmhG8SRhTxeCgVRQr/Ry"
+        },
+        {
+            "id_user": 3,
+            "username": "hilmi3",
+            "full_name": "string",
+            "role": "customer",
+            "email": "string",
+            "hashed_password": "$2b$12$eGgGAXnWaLWAQu6CE4dcsu3bAXjcMpmup8KrYIkcYIBExfGZFVHsS"
+        },
+        {
+            "id_user": 4,
+            "username": "hilmi4",
+            "full_name": "string",
+            "role": "customer",
+            "email": "string",
+            "hashed_password": "$2b$12$1rwyamtkECOFU4ORLGIwdOz6cHLUsLpzB6w3sO0jwndw3a6YvBoUW"
+        },
+        {
+            "id_user": 5,
+            "username": "hilmi6",
+            "full_name": "string",
+            "role": "customer",
+            "email": "string",
+            "hashed_password": "$2b$12$o2fryos9eicOlyABwp5Z8uH6p9pSwX4SVQb0V39my/loTVzK4FB4K"
+        },
+        {
+            "id_user": 6,
+            "username": "hilmi7",
+            "full_name": "string",
+            "role": "customer",
+            "email": "string",
+            "hashed_password": "$2b$12$sxmZKYhUkY791.DDbKPo9u2yiwGq.dHMg4SvB.tJ5lmE530i5S/YW"
+        },
+        {
+            "id_user": 7,
+            "username": "hilmi17",
+            "full_name": "string",
+            "email": "string",
+            "role": "admin",
+            "hashed_password": "$2b$12$PITF7hDIEl2q2FtaKiHFB.SRC8xf5iRNzPPexgXFy8CWIdO2UU1YK"
+        },
+        {
+            "id_user": 8,
+            "username": "hilmi27",
+            "full_name": "full_name",
+            "email": "email@example.com",
+            "role": "customer",
+            "hashed_password": "$2b$12$zIqeRc8d3Yd2z0Ui2szQyuSfpseSzrKfbLCxN1c1xH9cAJkWme3tK"
+        },
+        {
+            "id_user": 9,
+            "username": "hilmi37",
+            "full_name": "full_name",
+            "email": "email@example.com",
+            "role": "customer",
+            "hashed_password": "$2b$12$CKA1p/9s3AUYXgDvthm1cOpbyPDzT.x4irpn92HbMVWYq.x03nqLK"
+        },
+        {
+            "id_user": 10,
+            "username": "hilmibaskara",
+            "full_name": "hilmi baskara",
+            "email": "email@example.com",
+            "role": "customer",
+            "hashed_password": "$2b$12$wHkgTEscJCdFNCGe7m8rSOT5wa7tLT2pthDs5UHG0wpdvDeLVdLYG"
+        }
+    ]
+}
