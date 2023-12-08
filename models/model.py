@@ -73,3 +73,15 @@ class UserInDB(User):
     role: str   
     hashed_password: str
     disabled: bool or None = None
+
+class Consultation(BaseModel):
+    consultation_date: str
+    consultation_time: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "consultation_date": "2023-12-31",
+                "consultation_time": "10:00"
+            }
+        }
