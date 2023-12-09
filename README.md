@@ -14,11 +14,11 @@ Microservice ini dibangun menggunakan FastAPI dan memungkinkan pengguna untuk me
 
 Microservice ini merupakan hasil integrasi dari dua layanan, yaitu:
 
-## Layanan Pemesanan meja restoran
+### Layanan Pemesanan meja restoran
 Microservice ini merupakan layanan yang memungkinkan customer untuk melakukan reservasi meja restoran dan admin mengelola reservasi serta mengelola meja di suatu restoran. Untuk layanan lama pemesanan meja restoran dapat diakses melalui [http://40.119.238.184/docs](http://40.119.238.184/docs)
 
-## Layanan BevBuddy: Rekomendasi minuman
-Microservice ini dikembangkan oleh Fikri Naufal Hamdi NIM 18221096 dapat memberikan rekomendasi minuman dari suatu kafe atau restoran berdasarkan personalisasi pengguna, seperti berat dan tinggi badan, usia, gender, serta exercise level. Mood serta cuaca juga dapat memengaruhi hasil dari rekomendasi minuman. Oleh karena itu, dengan microservice rekomendasi minuman ini memungkinkan pengguna bisa mendapatkan rekomendasi minuman yang tepat dan sehat. Untuk layanan ini dapat diakses melalui: [https://bevbuddy--c3oinea.thankfulbush-47818fd3.southeastasia.azurecontainerapps.io/docs](https://bevbuddy--c3oinea.thankfulbush-47818fd3.southeastasia.azurecontainerapps.io/docs)]
+### Layanan BevBuddy: Rekomendasi minuman (oleh Fikri Naufal Hamdi 18221096)
+Microservice ini dapat memberikan rekomendasi minuman dari suatu kafe atau restoran berdasarkan personalisasi pengguna, seperti berat dan tinggi badan, usia, gender, serta exercise level. Mood serta cuaca juga dapat memengaruhi hasil dari rekomendasi minuman. Oleh karena itu, dengan microservice rekomendasi minuman ini memungkinkan pengguna bisa mendapatkan rekomendasi minuman yang tepat dan sehat. Untuk layanan ini dapat diakses melalui: [https://bevbuddy--c3oinea.thankfulbush-47818fd3.southeastasia.azurecontainerapps.io/docs](https://bevbuddy--c3oinea.thankfulbush-47818fd3.southeastasia.azurecontainerapps.io/docs)
 
 ## Usage
 
