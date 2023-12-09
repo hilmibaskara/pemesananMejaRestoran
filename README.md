@@ -7,66 +7,18 @@ Microservice ini dikembangkan sebagai bagian dari pemenuhan tugas kuliah II3160 
 
 ## Overview
 
-Microservice ini dibangun menggunakan FastAPI dan memungkinkan pengguna untuk mengelola reservasi dan status meja di sebuah restoran. Microservice ini menyediakan berbagai endpoints untuk melakukan operasi terkait reservasi dan meja. Layanan ini memuat data dari file JSON yang memungkinkan pengguna dapat berinteraksi dengannya melalui permintaan HTTP. Kemudian juga sudah dilengkapi dengan autentikasi untuk meningkatkan keamanan serta terhindar dari akses yang tidak sah.
+Microservice ini dibangun menggunakan FastAPI dan memungkinkan pengguna untuk mengelola reservasi dan status meja di sebuah restoran dan meminta rekomendasi minuman. Untuk penjelasan selengkapnya dapat mengakses dokumen berikut:
 
-## Endpoints
+1. Main Report: [https://docs.google.com/document/d/1Hkj6aAAVn8k9mXvN1vbfRwmJCI90XHiNyBd1UiRO_N0/edit#heading=h.xyr06xfjs70h](https://docs.google.com/document/d/1Hkj6aAAVn8k9mXvN1vbfRwmJCI90XHiNyBd1UiRO_N0/edit)
+2. API Documentation: [https://docs.google.com/document/d/17fzVj98Wo967b2hH2g6cnxuS655vKm3QZgjIiHM2NXM/edit](https://docs.google.com/document/d/17fzVj98Wo967b2hH2g6cnxuS655vKm3QZgjIiHM2NXM/edit)
 
-### Get All Reservations
+Microservice ini merupakan hasil integrasi dari dua layanan, yaitu:
 
-- **Endpoint:** `/reservations`
-- **HTTP Method:** GET
-- **Description:** Dapatkan daftar semua reservasi yang ada.
+## Layanan Pemesanan meja restoran
+Microservice ini merupakan layanan yang memungkinkan customer untuk melakukan reservasi meja restoran dan admin mengelola reservasi serta mengelola meja di suatu restoran. Untuk layanan lama pemesanan meja restoran dapat diakses melalui [http://40.119.238.184/docs](http://40.119.238.184/docs)
 
-
-### Get Reservation by ID
-
-- **Endpoint:** `/reservations/{reservation_id}`
-- **HTTP Method:** GET
-- **Description:** Dapatkan detail reservasi berdasarkan ID uniknya.
-
-
-### Create a New Reservation
-
-- **Endpoint:** `/reservations`
-- **HTTP Method:** POST
-- **Description:** Buat reservasi baru dengan menyediakan nama pemesan, ID meja, jam mulai, dan durasi. Ini akan secara otomatis menghasilkan ID unik untuk reservasi.
-
-
-### Get Table Status
-
-- **Endpoint:** `/tables/{id_table}/status`
-- **HTTP Method:** GET
-- **Deskripsi:** Dapatkan status meja untuk ID meja tertentu dan jam mulai yang ditentukan.
-
-
-
-
-### Update Reservation
-
-- **Endpoint:** `/reservation/{id_reservation}`
-- **HTTP Method:** PUT
-- **Deskripsi:** Perbarui reservasi yang berdasarkan menentukan ID-nya. Pengguna dapat mengubah nama pemesan, ID meja, jam mulai, dan durasinya.
-
-
-### Delete Reservation
-
-- **Endpoint:** `/reservations/{id_reservation}`
-- **HTTP Method:** DELETE
-- **Deskripsi:** Hapus reservasi berdasarkan ID-nya.
-
-
-### Add Tables
-
-- **Endpoint:** `/tables`
-- **HTTP Method:** POST
-- **Deskripsi:** Menambah jumlah meja yang tersedia
-
-### Reduce Tables
-
-- **Endpoint:** `/tables`
-- **HTTP Method:** DELETE
-- **Deskripsi:** Mengurangi jumlah meja yang tersedia
-
+## Layanan BevBuddy: Rekomendasi minuman
+Microservice ini dikembangkan oleh Fikri Naufal Hamdi NIM 18221096 dapat memberikan rekomendasi minuman dari suatu kafe atau restoran berdasarkan personalisasi pengguna, seperti berat dan tinggi badan, usia, gender, serta exercise level. Mood serta cuaca juga dapat memengaruhi hasil dari rekomendasi minuman. Oleh karena itu, dengan microservice rekomendasi minuman ini memungkinkan pengguna bisa mendapatkan rekomendasi minuman yang tepat dan sehat. Untuk layanan ini dapat diakses melalui: [https://bevbuddy--c3oinea.thankfulbush-47818fd3.southeastasia.azurecontainerapps.io/docs](https://bevbuddy--c3oinea.thankfulbush-47818fd3.southeastasia.azurecontainerapps.io/docs)]
 
 ## Usage
 
@@ -75,20 +27,16 @@ Microservice ini dibangun menggunakan FastAPI dan memungkinkan pengguna untuk me
 
 2. Buka terminal cmd sesuai dengan folder repositori
 
-3. Ketik `python -m venv meja` untuk membuka virtual environment
+3. Ketik `python -m venv env` untuk membuka virtual environment
 
-4. Akses ke virtual environment dengan cara ketik `meja\Scripts\activate`
+4. Akses ke virtual environment dengan cara ketik `env\Scripts\activate`
 
 5. Install library FastAPI dan uvicorn dengan `pip install fastapi uvicorn`
-6. Jalankan server FastAPI dengan menggunakan `uvicorn meja:app --port 8000 --reload`.
+6. Jalankan server FastAPI dengan menggunakan `uvicorn main:app --port 8000 --reload`.
 
 7. Akses dokumentasi API pada IP localhost yang disediakan di terminal dengan port 8000
 
 ### Online
 
 Akses langsung ke dokumentasi API pada
-[http://20.6.7.104/docs](http://20.6.7.104/docs) untuk menguji endpoints dan memahami cara penggunaan microservice secara langsung.
-
-## Data Files
-
-Microservice ini memuat data dari file JSON yang bernama `tables.json` dan `reservations.json`. Pastikan untuk menjaga file-file ini dengan data yang valid.
+[http://20.237.14.92/docs](http://20.237.14.92/docs) untuk menguji endpoints dan memahami cara penggunaan microservice secara langsung.
